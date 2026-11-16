@@ -1,4 +1,4 @@
-﻿name: Refresh profile metrics
+name: Refresh profile metrics
 
 on:
   schedule:
@@ -25,7 +25,7 @@ jobs:
         uses: stats-organization/github-readme-stats-action@2c498845f71017821efaad14293ebc736156ef21 # v2
         with:
           card: stats
-          options: username=Kin-jong-un2657&show_icons=true&theme=tokyonight&hide_border=true&hide_rank=true&card_width=495
+          options: username=Kin-jong-un2657&show_icons=true&theme=tokyonight&hide_border=true&hide_rank=true&card_width=495&disable_animations=true
           path: profile/stats.svg
           fail_on_error: 'true'
           token: ${{ secrets.GITHUB_TOKEN }}
