@@ -1,0 +1,57 @@
+﻿name: Refresh profile metrics
+
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/profile-metrics.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile-metrics
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Generate GitHub Readme Stats
+        uses: stats-organization/github-readme-stats-action@2c498845f71017821efaad14293ebc736156ef21 # v2
+        with:
+          card: stats
+          options: username=Kin-jong-un2657&show_icons=true&theme=tokyonight&hide_border=true&hide_rank=true&card_width=495
+          path: profile/stats.svg
+          fail_on_error: 'true'
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate GitHub Readme Streak Stats
+        uses: DenverCoder1/github-readme-streak-stats@125aaaf200620410446ebfa51897fca3607e04fd # v1
+        with:
+          options: user=Kin-jong-un2657&theme=tokyonight&hide_border=true&disable_animations=true
+          path: profile/streak.svg
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate generated SVGs
+        shell: python
+        run: |
+          import pathlib, re, xml.etree.ElementTree as ET
+          for name in ('stats', 'streak'):
+              path = pathlib.Path('profile') / f'{name}.svg'
+              svg = path.read_text(encoding='utf-8')
+              root = ET.fromstring(svg)
+              assert root.tag == '{http://www.w3.org/2000/svg}svg', name
+              assert not re.search(r'Something went wrong|Could not fetch|Failed to fetch|API rate limit exceeded|Access denied', svg, re.I), name
+              assert len(svg) > 1000, name
+      - name: Commit updated cards
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- profile/stats.svg profile/streak.svg
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Refresh public GitHub activity cards"
+          git push origin HEAD:main
